@@ -34,4 +34,16 @@ describe("deterministic checkout incident", () => {
     expect(evaluatePolicy({ changedFiles: ["demo/config.preview.json"], productionBefore: productionOriginal, productionAfter: productionOriginal, diff: '+  "PAYMENTS_API_URL": "https://payments.preview.internal/v1"', investigationConfidence: 0.95 }).passed).toBe(true);
     expect(evaluatePolicy({ changedFiles: ["demo/config.production.json"], productionBefore: productionOriginal, productionAfter: "changed", diff: "", investigationConfidence: 0.5 }).passed).toBe(false);
   });
+
+  it("blocks secrets, destructive commands, and low-confidence remediation", () => {
+    const base = {
+      changedFiles: ["demo/config.preview.json"],
+      productionBefore: productionOriginal,
+      productionAfter: productionOriginal,
+      investigationConfidence: 0.95,
+    };
+    expect(evaluatePolicy({ ...base, diff: '+ API_KEY=abcdefghijklmno' }).passed).toBe(false);
+    expect(evaluatePolicy({ ...base, diff: '+ rm -rf /tmp/demo' }).passed).toBe(false);
+    expect(evaluatePolicy({ ...base, diff: '', investigationConfidence: 0.84 }).passed).toBe(false);
+  });
 });

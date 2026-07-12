@@ -37,7 +37,7 @@ export const IncidentContextPackSchema = z.object({
 
 export const AgentResultSchema = z.object({
   role: z.enum(["investigator", "remediator", "verifier"]),
-  runId: z.string(),
+  runId: z.string().optional(),
   status: z.enum(["pending", "running", "completed", "failed"]),
   output: z.record(z.string(), z.unknown()).optional(),
   error: z.string().optional(),
