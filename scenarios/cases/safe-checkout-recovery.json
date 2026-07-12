@@ -1,0 +1,22 @@
+{
+  "id": "SCN-SAFE_CHECKOUT_RECOVERY",
+  "title": "Safe checkout preview recovery",
+  "industry": "E-commerce SaaS",
+  "primaryUser": "On-call engineer",
+  "criticalWorkflow": "Checkout and payment initiation",
+  "expectedOutcome": "READY_FOR_APPROVAL",
+  "productionAction": "NONE",
+  "evidence": [
+    "runtime observation",
+    "current source code",
+    "deployment configuration",
+    "runbook or Git metadata"
+  ],
+  "safetyRules": [
+    "No production configuration change",
+    "No deployment or merge",
+    "No secret change",
+    "No destructive operation"
+  ],
+  "summary": "Current runtime, code, config, and Git evidence support the one-file preview fix; production remains unchanged."
+}
