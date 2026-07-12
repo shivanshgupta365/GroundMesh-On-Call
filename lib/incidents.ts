@@ -21,9 +21,13 @@ export type Incident = {
   diff?: string;
 };
 
-declare global { var __groundmeshIncidentStore: { current: Incident; running: boolean } | undefined; }
-const store = globalThis.__groundmeshIncidentStore ?? { current: { id: "—", status: "idle", events: [], agents: [] }, running: false };
-globalThis.__groundmeshIncidentStore = store;
+type IncidentStore = { current: Incident; running: boolean };
+const INCIDENT_STORE_KEY = Symbol.for("groundmesh.oncall.incident-store.v1");
+const globalStore = globalThis as typeof globalThis & { [INCIDENT_STORE_KEY]?: IncidentStore };
+// Symbol.for survives Next development module reloads and keeps every route in
+// this Node process pointed at the same in-memory incident store.
+const store: IncidentStore = globalStore[INCIDENT_STORE_KEY] ?? { current: { id: "—", status: "idle", events: [], agents: [] }, running: false };
+globalStore[INCIDENT_STORE_KEY] = store;
 
 const addEvent = (kind: IncidentEvent["kind"], label: string, detail: string, role?: Role) => {
   store.current.events.push({ id: `${Date.now()}-${store.current.events.length}`, at: new Date().toISOString(), kind, label, detail, role });
