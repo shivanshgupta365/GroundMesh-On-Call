@@ -13,6 +13,12 @@ GroundMesh On-Call is a Hermes-powered Tier-1 failed-deployment response agency 
 
 > Built solo at the **World's Largest Hermes Buildathon, Bangalore** for the **AI as Agency** track.
 
+## Product demo
+
+[![Play the GroundMesh On-Call product demo](./docs/product-demo/groundmesh-oncall-demo-poster.png)](https://raw.githubusercontent.com/shivanshgupta365/GroundMesh-On-Call/main/docs/product-demo/groundmesh-oncall-demo.mp4)
+
+**[▶ Play the 47-second product demo with sound](https://raw.githubusercontent.com/shivanshgupta365/GroundMesh-On-Call/main/docs/product-demo/groundmesh-oncall-demo.mp4)**
+
 ## The problem
 
 When a release breaks a revenue-critical workflow, the engineer on call must reconcile runtime behavior, source code, deployment configuration, recent Git changes, and documentation—often while those sources disagree. A generic coding agent can suggest a patch; it does not establish which evidence is current, whether the action is allowed, or whether the recovery was actually proved.
