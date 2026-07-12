@@ -1,0 +1,3 @@
+2026-07-12T12:14:20Z INFO request_id=req-inc-1042 POST /checkout
+2026-07-12T12:14:20Z ERROR request_id=req-inc-1042 status=500 detail="PAYMENTS_API_URL is undefined"
+2026-07-12T12:14:21Z INFO incident=INC-1042 service=checkout environment=production-simulation

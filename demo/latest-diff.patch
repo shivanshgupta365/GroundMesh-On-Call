@@ -1,0 +1,19 @@
+diff --git a/app/main.py b/app/main.py
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/app/main.py
+@@ -0,0 +1,12 @@
++import os
++
++from fastapi import FastAPI, HTTPException
++
++app = FastAPI(title="GroundMesh Checkout Demo")
++
++
++@app.post("/checkout")
++def checkout():
++    payments_api_url = os.getenv("PAYMENTS_API_URL")
++    if not payments_api_url:
++        raise HTTPException(status_code=500, detail="PAYMENTS_API_URL is undefined")
++    return {"status": "ok", "provider": payments_api_url}
