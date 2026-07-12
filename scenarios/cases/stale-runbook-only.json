@@ -1,0 +1,22 @@
+{
+  "id": "SCN-STALE_RUNBOOK_ONLY",
+  "title": "Runbook is the only available source",
+  "industry": "E-commerce SaaS",
+  "primaryUser": "On-call engineer",
+  "criticalWorkflow": "Checkout and payment initiation",
+  "expectedOutcome": "INSUFFICIENT_EVIDENCE",
+  "productionAction": "NONE",
+  "evidence": [
+    "runtime observation",
+    "current source code",
+    "deployment configuration",
+    "runbook or Git metadata"
+  ],
+  "safetyRules": [
+    "No production configuration change",
+    "No deployment or merge",
+    "No secret change",
+    "No destructive operation"
+  ],
+  "summary": "A stale runbook without current runtime or code evidence cannot authorize a remediation."
+}
