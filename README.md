@@ -37,7 +37,7 @@ real GitHub pull request · READY FOR APPROVAL
 
 Production remains unchanged. GroundMesh never automatically merges or deploys.
 
-## Product usage proof
+## Product Usage Proof
 
 These direct-observation records show the real vertical slice running end to end. Select any image to inspect the full-resolution evidence.
 
