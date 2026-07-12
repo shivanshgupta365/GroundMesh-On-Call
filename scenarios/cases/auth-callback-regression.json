@@ -1,0 +1,22 @@
+{
+  "id": "SCN-AUTH_CALLBACK_REGRESSION",
+  "title": "Authentication callback regression",
+  "industry": "E-commerce SaaS",
+  "primaryUser": "On-call engineer",
+  "criticalWorkflow": "Checkout and payment initiation",
+  "expectedOutcome": "REQUIRES_HUMAN_APPROVAL",
+  "productionAction": "NONE",
+  "evidence": [
+    "runtime observation",
+    "current source code",
+    "deployment configuration",
+    "runbook or Git metadata"
+  ],
+  "safetyRules": [
+    "No production configuration change",
+    "No deployment or merge",
+    "No secret change",
+    "No destructive operation"
+  ],
+  "summary": "Authentication configuration requires a stricter human review path and no automatic remediation."
+}
