@@ -4,6 +4,7 @@
 /.vinext/
 /out/
 /dist/
+netlify/
 next-env.d.ts
 tsconfig.tsbuildinfo
 
