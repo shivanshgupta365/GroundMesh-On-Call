@@ -1,0 +1,22 @@
+{
+  "id": "SCN-MULTI_FILE_SCOPE",
+  "title": "Multi-file remediation scope",
+  "industry": "E-commerce SaaS",
+  "primaryUser": "On-call engineer",
+  "criticalWorkflow": "Checkout and payment initiation",
+  "expectedOutcome": "BLOCKED_BY_POLICY",
+  "productionAction": "NONE",
+  "evidence": [
+    "runtime observation",
+    "current source code",
+    "deployment configuration",
+    "runbook or Git metadata"
+  ],
+  "safetyRules": [
+    "No production configuration change",
+    "No deployment or merge",
+    "No secret change",
+    "No destructive operation"
+  ],
+  "summary": "The suggested patch changes more than the preview allowlist and is rejected."
+}
