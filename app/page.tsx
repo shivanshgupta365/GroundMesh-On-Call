@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Activity, ArrowUpRight, GitBranch, GitPullRequest, RefreshCw } from "lucide-react";
 
 type Source = { id: string; label: string; type: string; freshness: "current" | "stale" | "unknown"; authority: number; excerpt: string; fingerprint: string };
 type Event = { id: string; at: string; kind: string; label: string; detail: string; role?: string };
@@ -10,6 +12,15 @@ type Incident = {
   context?: { sources: Source[]; conflicts: { sourceIds: string[]; title: string; resolution: string }[] };
   policy?: { passed: boolean; reasons: string[] }; diff?: string;
   final?: { status: string; productionStatus?: number; previewStatus?: number; checksPassed: number; checksFailed: number; changedFiles: string[]; pullRequestUrl?: string; reason?: string };
+};
+type GitHubPull = { number: number; title: string; url: string; updatedAt: string; draft: boolean; head: string; base: string; author: string; outcome: string };
+type GitHubSummary = {
+  available: boolean;
+  syncedAt?: string;
+  error?: string;
+  repository?: { name: string; url: string; defaultBranch: string; stars: number; forks: number; openItems: number; pushedAt: string };
+  counts?: Record<string, number>;
+  pullRequests?: GitHubPull[];
 };
 
 const emptyIncident: Incident = { id: "—", status: "idle", events: [], agents: [] };
@@ -22,7 +33,12 @@ function formatTime(value?: string) {
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+function outcomeClass(value: string) {
+  return value.toLowerCase().replaceAll("_", "-");
+}
+
 export default function Home() {
+  const reducedMotion = useReducedMotion();
   const [incident, setIncident] = useState<Incident>(emptyIncident);
   const [production, setProduction] = useState<number | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
@@ -32,6 +48,9 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState("00:00");
   const [requestError, setRequestError] = useState("");
+  const [github, setGithub] = useState<GitHubSummary>({ available: false });
+  const [githubRefreshing, setGithubRefreshing] = useState(false);
+  const [githubFilter, setGithubFilter] = useState("ALL");
 
   async function refresh() {
     const [incidentResult, productionResult, previewResult, hermesResult] = await Promise.allSettled([
@@ -54,10 +73,28 @@ export default function Home() {
     }
   }
 
+  async function refreshGithub(manual = false) {
+    if (manual) setGithubRefreshing(true);
+    try {
+      const response = await fetch("/api/github/summary", { cache: "no-store" });
+      const result = await response.json() as GitHubSummary;
+      setGithub(response.ok ? result : { available: false, error: result.error || "GitHub sync is unavailable." });
+    } catch {
+      setGithub({ available: false, error: "GitHub sync could not reach the server." });
+    } finally {
+      if (manual) setGithubRefreshing(false);
+    }
+  }
+
   useEffect(() => {
     const initialRefresh = window.setTimeout(() => void refresh(), 0);
     const timer = window.setInterval(() => void refresh(), 700);
     return () => { window.clearTimeout(initialRefresh); window.clearInterval(timer); };
+  }, []);
+  useEffect(() => {
+    const initialSync = window.setTimeout(() => void refreshGithub(), 50);
+    const timer = window.setInterval(() => void refreshGithub(), 30_000);
+    return () => { window.clearTimeout(initialSync); window.clearInterval(timer); };
   }, []);
   useEffect(() => {
     const timer = window.setInterval(() => setElapsed(formatTime(incident.startedAt)), 1000);
@@ -85,12 +122,16 @@ export default function Home() {
   const ready = incident.status === "ready";
   const conflict = incident.context?.conflicts[0];
   const conflictIds = conflict?.sourceIds ?? [];
+  const pullRequests = useMemo(() => github.pullRequests ?? [], [github.pullRequests]);
+  const githubOutcomes = useMemo(() => ["ALL", ...Array.from(new Set(pullRequests.map((pull) => pull.outcome)))], [pullRequests]);
+  const filteredPulls = githubFilter === "ALL" ? pullRequests : pullRequests.filter((pull) => pull.outcome === githubFilter);
 
   return <main className="war-room">
     <header className="command-strip">
       <a className="wordmark" href="#top"><span className="mesh-mark" aria-hidden="true"><i /><i /><i /><i /></span>GroundMesh <b>On-Call</b></a>
       <div className="command-meta">
         <span><StatusDot active={hermes.available} /> HERMES {hermes.available ? (hermes.mode === "runs-api" ? "RUNS API" : "LOCAL") : "OFFLINE"}</span>
+        <span><StatusDot active={github.available} /> GITHUB {github.available ? "SYNCED" : "WAITING"}</span>
         <span>INCIDENT <strong>{incident.id}</strong></span>
         <span>ELAPSED <strong>{elapsed}</strong></span>
       </div>
@@ -101,9 +142,35 @@ export default function Home() {
     </header>
 
     <section className="masthead" id="top">
-      <div><p className="eyebrow">Tier-1 failed-deployment response agency</p><h1>Verified context.<br /><em>Safe recovery.</em></h1></div>
-      <p className="masthead-copy">A bounded, source-backed response for one broken checkout deployment. Production never changes without human approval.</p>
-      <div className={`decision ${incident.status}`}><span>DECISION</span><strong>{ready ? "READY FOR APPROVAL" : incident.status === "idle" ? "AWAITING ALERT" : incident.status.toUpperCase()}</strong></div>
+      <motion.div initial={reducedMotion ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .65 }}><p className="eyebrow">E-commerce SaaS · revenue-critical checkout</p><h1>Verified context.<br /><em>Safe recovery.</em></h1></motion.div>
+      <div className="masthead-side"><p className="masthead-copy">A source-backed incident agency with a live GitHub review trail. Every agent action stays bounded; every release waits for human approval.</p><div className="github-orbit" aria-hidden="true"><span className="orbit-ring ring-one" /><span className="orbit-ring ring-two" /><i className="orbit-node node-one" /><i className="orbit-node node-two" /><GitBranch size={28} /></div></div>
+      <motion.div layout className={`decision ${incident.status}`}><span>DECISION</span><strong>{ready ? "READY FOR APPROVAL" : incident.status === "idle" ? "AWAITING ALERT" : incident.status.toUpperCase()}</strong></motion.div>
+    </section>
+
+    <section className="github-dock" aria-label="Live GitHub repository sync">
+      <div className="github-identity">
+        <div className="github-icon"><GitBranch size={22} /></div>
+        <div><span className="dock-kicker">LIVE REPOSITORY</span>{github.repository ? <a href={github.repository.url} target="_blank" rel="noreferrer">{github.repository.name} <ArrowUpRight size={13} /></a> : <strong>Connecting to GitHub…</strong>}</div>
+        <button className="sync-button" onClick={() => void refreshGithub(true)} disabled={githubRefreshing} aria-label="Refresh GitHub data"><RefreshCw size={14} className={githubRefreshing ? "spinning" : ""} /> Sync now</button>
+      </div>
+      <div className="github-metrics" aria-live="polite">
+        <div><span>OPEN PRs</span><motion.strong key={pullRequests.length} initial={reducedMotion ? false : { scale: .72, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>{pullRequests.length || "—"}</motion.strong></div>
+        <div><span>READY</span><strong>{github.counts?.READY_FOR_APPROVAL ?? 0}</strong></div>
+        <div><span>BLOCKED</span><strong>{github.counts?.BLOCKED_BY_POLICY ?? 0}</strong></div>
+        <div><span>LAST PUSH</span><strong>{github.repository ? new Date(github.repository.pushedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}</strong></div>
+      </div>
+      <div className="github-ledger">
+        <div className="ledger-head"><span><GitPullRequest size={13} /> REVIEW LEDGER</span><small>{github.syncedAt ? `SYNCED ${new Date(github.syncedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : github.error || "AWAITING LIVE DATA"}</small></div>
+        <div className="outcome-filters" aria-label="Filter pull requests by outcome">{githubOutcomes.map((outcome) => <button key={outcome} className={githubFilter === outcome ? "active" : ""} onClick={() => setGithubFilter(outcome)}>{outcome.replaceAll("_", " ")} {outcome === "ALL" ? pullRequests.length : github.counts?.[outcome] ?? 0}</button>)}</div>
+        <div className="pr-stream">
+          <AnimatePresence mode="popLayout">
+            {filteredPulls.map((pull, index) => <motion.a layout key={pull.number} href={pull.url} target="_blank" rel="noreferrer" className="pr-ticket" initial={reducedMotion ? false : { opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: .96 }} transition={{ delay: reducedMotion ? 0 : Math.min(index * .035, .28) }}>
+              <span className="pr-number">#{pull.number}</span><strong>{pull.title}</strong><span className={`outcome-tag ${outcomeClass(pull.outcome)}`}>{pull.outcome.replaceAll("_", " ")}</span><small>{pull.head} → {pull.base}</small><ArrowUpRight size={14} />
+            </motion.a>)}
+          </AnimatePresence>
+          {github.available && filteredPulls.length === 0 && <p className="ledger-empty">No pull requests match this outcome.</p>}
+        </div>
+      </div>
     </section>
 
     <section className="main-grid" aria-label="Incident command center">
@@ -117,7 +184,7 @@ export default function Home() {
       <section className="incident-story" aria-label="Real event timeline">
         <div className="section-label">02 — INCIDENT STORY <span>{incident.events.length} REAL EVENTS</span></div>
         <div className="timeline" aria-live="polite" aria-atomic="false">
-          {incident.events.length === 0 ? <div className="empty-state"><span>NO ACTIVE INCIDENT</span><p>Start the drill to gather fresh evidence from the broken checkout service.</p></div> : incident.events.map((event) => <article className={`timeline-event ${event.kind}`} key={event.id}><time>{new Date(event.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</time><div><h2>{event.label}</h2><p>{event.detail}</p>{event.role && <small>HERMES / {event.role}</small>}</div></article>)}
+          {incident.events.length === 0 ? <div className="empty-state"><Activity size={18} /><span>NO ACTIVE INCIDENT</span><p>Start the drill to gather fresh evidence from the broken checkout service.</p></div> : <AnimatePresence initial={false}>{incident.events.map((event) => <motion.article layout initial={reducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`timeline-event ${event.kind}`} key={event.id}><time>{new Date(event.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</time><div><h2>{event.label}</h2><p>{event.detail}</p>{event.role && <small>HERMES / {event.role}</small>}</div></motion.article>)}</AnimatePresence>}
         </div>
         {ready && <div className="approval-stamp">READY FOR<br />APPROVAL</div>}
       </section>
