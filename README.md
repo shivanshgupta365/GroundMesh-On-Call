@@ -44,50 +44,57 @@ These direct-observation records show the real vertical slice running end to end
 <table>
   <tr>
     <td width="50%" valign="top">
-      <a href="./docs/product-usage/01-real-http-500.png">
-        <img src="./docs/product-usage/01-real-http-500.png" alt="GroundMesh reproducing production and preview HTTP 500 responses over real HTTP">
+      <a href="./docs/product-usage/01-real-github-incident-room.png">
+        <img src="./docs/product-usage/01-real-github-incident-room.png" alt="GroundMesh GitHub-synced incident room showing the live review ledger and safety decisions">
       </a>
       <br>
-      <strong>1 · Failure reproduced</strong><br>
+      <strong>1 · Live incident room</strong><br>
+      The GitHub-synced review ledger exposes real incident outcomes, policy blocks, and approval state.
+    </td>
+    <td width="50%" valign="top">
+      <a href="./docs/product-usage/02-real-http-500.png">
+        <img src="./docs/product-usage/02-real-http-500.png" alt="GroundMesh reproducing production and preview HTTP 500 responses over real HTTP">
+      </a>
+      <br>
+      <strong>2 · Failure reproduced</strong><br>
       Production and preview both return HTTP 500 over real requests.
     </td>
+  </tr>
+  <tr>
     <td width="50%" valign="top">
-      <a href="./docs/product-usage/02-real-tests-and-build.png">
-        <img src="./docs/product-usage/02-real-tests-and-build.png" alt="GroundMesh verification transcript showing passing tests, typecheck, lint, and production build">
+      <a href="./docs/product-usage/03-real-tests-and-build.png">
+        <img src="./docs/product-usage/03-real-tests-and-build.png" alt="GroundMesh verification transcript showing passing tests, typecheck, lint, and production build">
       </a>
       <br>
-      <strong>2 · Verification suite passed</strong><br>
+      <strong>3 · Verification suite passed</strong><br>
       Pytest, Vitest, TypeScript, lint, and the production build complete successfully.
     </td>
-  </tr>
-  <tr>
     <td width="50%" valign="top">
-      <a href="./docs/product-usage/03-real-http-200-10x.png">
-        <img src="./docs/product-usage/03-real-http-200-10x.png" alt="GroundMesh preview recovery showing HTTP 200 on ten of ten requests while production remains HTTP 500">
+      <a href="./docs/product-usage/04-real-http-200-10x.png">
+        <img src="./docs/product-usage/04-real-http-200-10x.png" alt="GroundMesh preview recovery showing HTTP 200 on ten of ten requests while production remains HTTP 500">
       </a>
       <br>
-      <strong>3 · Preview recovery proved</strong><br>
+      <strong>4 · Preview recovery proved</strong><br>
       Preview returns HTTP 200 on 10/10 requests while production remains HTTP 500.
     </td>
-    <td width="50%" valign="top">
-      <a href="./docs/product-usage/04-real-github-pr.png">
-        <img src="./docs/product-usage/04-real-github-pr.png" alt="GroundMesh real GitHub pull request showing the bounded preview remediation and automated review">
-      </a>
-      <br>
-      <strong>4 · Real pull request created</strong><br>
-      GitHub shows the live remediation PR, one commit, one changed file, and automated review evidence.
-    </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <a href="./docs/product-usage/05-real-one-file-diff.png">
-        <img src="./docs/product-usage/05-real-one-file-diff.png" alt="GroundMesh GitHub pull request showing the one-file preview configuration correction">
+      <a href="./docs/product-usage/05-real-github-pr.png">
+        <img src="./docs/product-usage/05-real-github-pr.png" alt="GroundMesh real GitHub pull request showing the bounded preview remediation and automated review">
       </a>
       <br>
-      <strong>5 · One-file change inspected</strong><br>
+      <strong>5 · Real pull request created</strong><br>
+      GitHub shows the live remediation PR, one commit, one changed file, and automated review evidence.
+    </td>
+    <td width="50%" valign="top">
+      <a href="./docs/product-usage/06-real-one-file-diff.png">
+        <img src="./docs/product-usage/06-real-one-file-diff.png" alt="GroundMesh GitHub pull request showing the one-file preview configuration correction">
+      </a>
+      <br>
+      <strong>6 · One-file change inspected</strong><br>
       The Files changed view confirms the bounded preview configuration correction and no production edit.
     </td>
-    <td width="50%" valign="top"></td>
   </tr>
 </table>
 
