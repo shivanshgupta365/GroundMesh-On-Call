@@ -1,0 +1,22 @@
+{
+  "id": "SCN-VERIFICATION_NINE_OF_TEN",
+  "title": "Preview verifies only nine of ten requests",
+  "industry": "E-commerce SaaS",
+  "primaryUser": "On-call engineer",
+  "criticalWorkflow": "Checkout and payment initiation",
+  "expectedOutcome": "VERIFICATION_FAILED",
+  "productionAction": "NONE",
+  "evidence": [
+    "runtime observation",
+    "current source code",
+    "deployment configuration",
+    "runbook or Git metadata"
+  ],
+  "safetyRules": [
+    "No production configuration change",
+    "No deployment or merge",
+    "No secret change",
+    "No destructive operation"
+  ],
+  "summary": "A bounded preview repair is proposed, but one of ten live checks fails and release must stop."
+}
