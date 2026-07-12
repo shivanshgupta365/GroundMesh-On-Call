@@ -41,8 +41,16 @@ Your final response must be exactly one JSON object, with no Markdown, code fenc
 {"failureReproduced":true,"observedStatus":500,"rootCause":"current code requires PAYMENTS_API_URL while the active configuration uses PAYMENT_API_URL","confidence":0.95,"sourceIds":["runtime","code","production-config","runbook"],"conflicts":["current code vs stale runbook"],"recommendedAction":"PATCH_PREVIEW_CONFIG"}
 
 Only claim observations you verified. Cite the applicable source IDs from the evidence below; do not invent sources. Evidence:\n${evidence}`;
-  if (role === "remediator") return `You are the GroundMesh Remediator for ${incidentId}. Create branch groundmesh/${incidentId.toLowerCase()}. Edit only demo/config.preview.json. Replace the stale PAYMENT_API_URL key with PAYMENTS_API_URL; preserve the URL value. Modify no other file. Do not commit, push, deploy, or merge. Return JSON only matching {changedFiles,productionChanged,branch,summary}.`;
-  return `You are the GroundMesh Verifier for ${incidentId}. Run the tests. Confirm production checkout stays HTTP 500 and preview checkout is HTTP 200. Make ten real preview checkout requests. If and only if all pass, commit only demo/config.preview.json, push the current branch, and create a real GitHub pull request. Never merge. Return JSON only matching {status,productionStatus,previewStatus,checksPassed,checksFailed,changedFiles,pullRequestUrl,productionChanged}. If GitHub is unavailable, say so truthfully and do not invent a URL.`;
+  if (role === "remediator") return `You are the GroundMesh Remediator for ${incidentId}. Create branch groundmesh/${incidentId.toLowerCase()}. Edit only demo/config.preview.json. Replace the stale PAYMENT_API_URL key with PAYMENTS_API_URL; preserve the URL value. Modify no other file. Do not commit, push, deploy, or merge.
+
+Your final response must be exactly one JSON object, with no Markdown, code fence, prose, or tool transcript. Include every required key and exact JSON types:
+{"changedFiles":["demo/config.preview.json"],"productionChanged":false,"branch":"groundmesh/${incidentId.toLowerCase()}","summary":"Replaced the stale preview key with PAYMENTS_API_URL."}`;
+  return `You are the GroundMesh Verifier for ${incidentId}. Run the tests. Confirm production checkout stays HTTP 500 and preview checkout is HTTP 200. Make ten real preview checkout requests. If and only if all pass, commit only demo/config.preview.json, push the current branch, and create a real GitHub pull request. Never merge.
+
+Your final response must be exactly one JSON object, with no Markdown, code fence, prose, or tool transcript. Include every required key and exact JSON types. A successful result must have a genuine GitHub URL, never a placeholder:
+{"status":"READY_FOR_APPROVAL","productionStatus":500,"previewStatus":200,"checksPassed":10,"checksFailed":0,"changedFiles":["demo/config.preview.json"],"pullRequestUrl":"https://github.com/owner/repo/pull/123","productionChanged":false}
+
+If release cannot complete, return the same typed fields with status BLOCKED or FAILED and no fabricated pullRequestUrl.`;
 }
 
 async function git(args: string[]) {
