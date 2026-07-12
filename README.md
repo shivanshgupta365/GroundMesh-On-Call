@@ -70,13 +70,24 @@ These direct-observation records show the real vertical slice running end to end
       Preview returns HTTP 200 on 10/10 requests while production remains HTTP 500.
     </td>
     <td width="50%" valign="top">
-      <a href="./docs/product-usage/04-real-one-file-diff.png">
-        <img src="./docs/product-usage/04-real-one-file-diff.png" alt="GroundMesh GitHub pull request showing the one-file preview configuration correction">
+      <a href="./docs/product-usage/04-real-github-pr.png">
+        <img src="./docs/product-usage/04-real-github-pr.png" alt="GroundMesh real GitHub pull request showing the bounded preview remediation and automated review">
       </a>
       <br>
-      <strong>4 · One-file pull request</strong><br>
-      The review surface shows the bounded preview configuration correction and no production edit.
+      <strong>4 · Real pull request created</strong><br>
+      GitHub shows the live remediation PR, one commit, one changed file, and automated review evidence.
     </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="./docs/product-usage/05-real-one-file-diff.png">
+        <img src="./docs/product-usage/05-real-one-file-diff.png" alt="GroundMesh GitHub pull request showing the one-file preview configuration correction">
+      </a>
+      <br>
+      <strong>5 · One-file change inspected</strong><br>
+      The Files changed view confirms the bounded preview configuration correction and no production edit.
+    </td>
+    <td width="50%" valign="top"></td>
   </tr>
 </table>
 
