@@ -1,0 +1,4 @@
+{
+  "PAYMENT_API_URL": "https://payments.preview.internal/v1",
+  "release": "2026.07.12-rc1"
+}
