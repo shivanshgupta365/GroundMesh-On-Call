@@ -15,9 +15,9 @@ GroundMesh On-Call is a Hermes-powered Tier-1 failed-deployment response agency 
 
 ## Product demo
 
-[![Play the GroundMesh On-Call product demo](./docs/product-demo/groundmesh-oncall-demo-poster.png)](https://raw.githubusercontent.com/shivanshgupta365/GroundMesh-On-Call/main/docs/product-demo/groundmesh-oncall-demo.mp4)
+[![Play the GroundMesh On-Call product demo](./docs/product-demo/groundmesh-oncall-demo-poster.png)](https://cdn.jsdelivr.net/gh/shivanshgupta365/GroundMesh-On-Call@main/docs/product-demo/groundmesh-oncall-demo.mp4)
 
-**[▶ Play the 47-second product demo with sound](https://raw.githubusercontent.com/shivanshgupta365/GroundMesh-On-Call/main/docs/product-demo/groundmesh-oncall-demo.mp4)**
+**[▶ Play the 47-second product demo with sound](https://cdn.jsdelivr.net/gh/shivanshgupta365/GroundMesh-On-Call@main/docs/product-demo/groundmesh-oncall-demo.mp4)**
 
 ## The problem
 
