@@ -41,7 +41,7 @@ Your final response must be exactly one JSON object, with no Markdown, code fenc
 {"failureReproduced":true,"observedStatus":500,"rootCause":"current code requires PAYMENTS_API_URL while the active configuration uses PAYMENT_API_URL","confidence":0.95,"sourceIds":["runtime","code","production-config","runbook"],"conflicts":["current code vs stale runbook"],"recommendedAction":"PATCH_PREVIEW_CONFIG"}
 
 Only claim observations you verified. Cite the applicable source IDs from the evidence below; do not invent sources. Evidence:\n${evidence}`;
-  if (role === "remediator") return `You are the GroundMesh Remediator for ${incidentId}. Create branch groundmesh/${incidentId.toLowerCase()}. Edit only demo/config.preview.json. Replace the stale PAYMENT_API_URL key with PAYMENTS_API_URL; preserve the URL value. Modify no other file. Do not commit, push, deploy, or merge.
+  if (role === "remediator") return `You are the GroundMesh Remediator for ${incidentId}. The server has already created and checked out dedicated branch groundmesh/${incidentId.toLowerCase()}. Stay on that branch. Edit only demo/config.preview.json. Replace the stale PAYMENT_API_URL key with PAYMENTS_API_URL; preserve the URL value. Modify no other file. Do not commit, push, deploy, or merge.
 
 Your final response must be exactly one JSON object, with no Markdown, code fence, prose, or tool transcript. Include every required key and exact JSON types:
 {"changedFiles":["demo/config.preview.json"],"productionChanged":false,"branch":"groundmesh/${incidentId.toLowerCase()}","summary":"Replaced the stale preview key with PAYMENTS_API_URL."}`;
@@ -56,6 +56,15 @@ If release cannot complete, return the same typed fields with status BLOCKED or 
 async function git(args: string[]) {
   const { stdout } = await execFileAsync("git", args, { cwd: process.cwd(), maxBuffer: 1_000_000 });
   return stdout.trim();
+}
+
+async function prepareIncidentBranch(incidentId: string) {
+  const branch = `groundmesh/${incidentId.toLowerCase()}`;
+  const current = await git(["branch", "--show-current"]);
+  if (current === branch) return branch;
+  if (current !== "main") throw new Error(`Cannot start incident from branch ${current}; reset to main first.`);
+  await git(["checkout", "-b", branch]);
+  return branch;
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -205,9 +214,10 @@ async function workflow(origin: string) {
     if (beforeInvestigation !== await workingTreeSnapshot()) throw new Error("Investigator changed the working tree; remediation was stopped.");
     if (investigator.failureReproduced !== true || Number(investigator.confidence) < 0.85) throw new Error("Investigation did not produce sufficient verified evidence.");
     const productionBefore = await readFile(paths.production, "utf8");
+    const expectedBranch = await prepareIncidentBranch(incidentId);
+    addEvent("agent", "Dedicated incident branch prepared", `${expectedBranch} is checked out before the bounded remediation.`, "remediator");
     await runRole("remediator", context);
     const productionAfter = await readFile(paths.production, "utf8");
-    const expectedBranch = `groundmesh/${incidentId.toLowerCase()}`;
     if (await git(["branch", "--show-current"]) !== expectedBranch) throw new Error("Remediator did not create the required incident branch.");
     const changedFiles = await changedWorktreeFiles(baselineTracked, baselineUntracked);
     const diff = await git(["diff", "HEAD", "--", "demo/config.preview.json"]);
