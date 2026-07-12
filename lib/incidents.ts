@@ -31,7 +31,12 @@ const addEvent = (kind: IncidentEvent["kind"], label: string, detail: string, ro
 
 function prompt(role: Role, incidentId: string, context: IncidentContextPack) {
   const evidence = context.sources.map((s) => `${s.id}: ${s.label} (${s.freshness}) — ${s.excerpt}`).join("\n");
-  if (role === "investigator") return `You are the GroundMesh Investigator for ${incidentId}. Read-only. Use terminal/file tools to reproduce the checkout failure and inspect sources. Do not modify any file. Cite source IDs. Return JSON only matching {failureReproduced,observedStatus,rootCause,confidence,sourceIds,conflicts,recommendedAction}. Evidence:\n${evidence}`;
+  if (role === "investigator") return `You are the GroundMesh Investigator for ${incidentId}. Read-only. Use terminal/file tools to reproduce the checkout failure and inspect sources. Do not modify any file.
+
+Your final response must be exactly one JSON object, with no Markdown, code fence, prose, or tool transcript. Include every required key with the exact JSON types:
+{"failureReproduced":true,"observedStatus":500,"rootCause":"current code requires PAYMENTS_API_URL while the active configuration uses PAYMENT_API_URL","confidence":0.95,"sourceIds":["runtime","code","production-config","runbook"],"conflicts":["current code vs stale runbook"],"recommendedAction":"PATCH_PREVIEW_CONFIG"}
+
+Only claim observations you verified. Cite the applicable source IDs from the evidence below; do not invent sources. Evidence:\n${evidence}`;
   if (role === "remediator") return `You are the GroundMesh Remediator for ${incidentId}. Create branch groundmesh/${incidentId.toLowerCase()}. Edit only demo/config.preview.json. Replace the stale PAYMENT_API_URL key with PAYMENTS_API_URL; preserve the URL value. Modify no other file. Do not commit, push, deploy, or merge. Return JSON only matching {changedFiles,productionChanged,branch,summary}.`;
   return `You are the GroundMesh Verifier for ${incidentId}. Run the tests. Confirm production checkout stays HTTP 500 and preview checkout is HTTP 200. Make ten real preview checkout requests. If and only if all pass, commit only demo/config.preview.json, push the current branch, and create a real GitHub pull request. Never merge. Return JSON only matching {status,productionStatus,previewStatus,checksPassed,checksFailed,changedFiles,pullRequestUrl,productionChanged}. If GitHub is unavailable, say so truthfully and do not invent a URL.`;
 }
@@ -81,6 +86,13 @@ function validateAgentOutput(role: Role, output: Record<string, unknown>) {
   );
 }
 
+function validationError(role: Role, output: Record<string, unknown>) {
+  const received = Object.keys(output).sort().join(", ") || "none";
+  if (role === "investigator") return `Investigator final JSON did not meet the required evidence schema (received keys: ${received}).`;
+  if (role === "remediator") return `Remediator final JSON did not meet the bounded-change schema (received keys: ${received}).`;
+  return `Verifier final JSON did not meet the release-evidence schema (received keys: ${received}).`;
+}
+
 async function workingTreeSnapshot() {
   const [unstaged, staged, status, untracked] = await Promise.all([
     git(["diff", "--no-ext-diff", "--binary"]),
@@ -116,7 +128,7 @@ async function runRole(role: Role, context: IncidentContextPack) {
   store.current.agents.push(agent);
   try {
     const run = await runHermes(prompt(role, store.current.id, context));
-    if (!validateAgentOutput(role, run.output)) throw new Error(`${role} returned a malformed or incomplete final JSON result.`);
+    if (!validateAgentOutput(role, run.output)) throw new Error(validationError(role, run.output));
     agent.runId = run.id;
     agent.status = "completed";
     agent.output = run.output;
