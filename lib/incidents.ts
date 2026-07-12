@@ -97,22 +97,35 @@ function validationError(role: Role, output: Record<string, unknown>) {
   return `Verifier final JSON did not meet the release-evidence schema (received keys: ${received}).`;
 }
 
+async function untrackedFileHashes() {
+  const untracked = await git(["ls-files", "--others", "--exclude-standard"]);
+  return new Map(await Promise.all(untracked.split("\n").filter(Boolean).map(async (file) => {
+    const { stdout } = await execFileAsync("git", ["hash-object", "--", file], { cwd: process.cwd() });
+    return [file, stdout.trim()] as const;
+  })));
+}
+
 async function workingTreeSnapshot() {
   const [unstaged, staged, status, untracked] = await Promise.all([
     git(["diff", "--no-ext-diff", "--binary"]),
     git(["diff", "--cached", "--no-ext-diff", "--binary"]),
     git(["status", "--porcelain=v1"]),
-    git(["ls-files", "--others", "--exclude-standard"]),
+    untrackedFileHashes(),
   ]);
-  const untrackedHashes = await Promise.all(untracked.split("\n").filter(Boolean).map(async (file) => {
-    const { stdout } = await execFileAsync("git", ["hash-object", "--", file], { cwd: process.cwd() });
-    return `${file}:${stdout.trim()}`;
-  }));
-  return `${status}\n-- unstaged --\n${unstaged}\n-- staged --\n${staged}\n-- untracked --\n${untrackedHashes.join("\n")}`;
+  return `${status}\n-- unstaged --\n${unstaged}\n-- staged --\n${staged}\n-- untracked --\n${[...untracked].map(([file, hash]) => `${file}:${hash}`).join("\n")}`;
 }
 
-async function changedWorktreeFiles() {
-  return (await git(["status", "--porcelain=v1"])).split("\n").filter(Boolean).map((line) => line.slice(3));
+async function changedWorktreeFiles(baselineUntracked: Map<string, string>) {
+  const [unstaged, staged, currentUntracked] = await Promise.all([
+    git(["diff", "--name-only", "HEAD"]),
+    git(["diff", "--cached", "--name-only"]),
+    untrackedFileHashes(),
+  ]);
+  const files = new Set([...unstaged.split("\n"), ...staged.split("\n")].filter(Boolean));
+  for (const [file, hash] of currentUntracked) {
+    if (baselineUntracked.get(file) !== hash) files.add(file);
+  }
+  return [...files].sort();
 }
 
 async function verifyPullRequest(url: unknown) {
@@ -161,6 +174,7 @@ async function workflow(origin: string) {
     const context = await buildContextPack(incidentId);
     store.current.context = context;
     addEvent("context", "Context Pack grounded", `${context.sources.length} current sources prepared; one stale-context conflict found.`);
+    const baselineUntracked = await untrackedFileHashes();
     const beforeInvestigation = await workingTreeSnapshot();
     const investigator = await runRole("investigator", context);
     if (beforeInvestigation !== await workingTreeSnapshot()) throw new Error("Investigator changed the working tree; remediation was stopped.");
@@ -170,7 +184,7 @@ async function workflow(origin: string) {
     const productionAfter = await readFile(paths.production, "utf8");
     const expectedBranch = `groundmesh/${incidentId.toLowerCase()}`;
     if (await git(["branch", "--show-current"]) !== expectedBranch) throw new Error("Remediator did not create the required incident branch.");
-    const changedFiles = await changedWorktreeFiles();
+    const changedFiles = await changedWorktreeFiles(baselineUntracked);
     const diff = await git(["diff", "HEAD", "--", "demo/config.preview.json"]);
     const policy = evaluatePolicy({ changedFiles, productionBefore, productionAfter, diff, investigationConfidence: Number(investigator.confidence) });
     store.current.policy = policy;

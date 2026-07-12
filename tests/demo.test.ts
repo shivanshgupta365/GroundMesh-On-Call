@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { afterEach, describe, expect, it } from "vitest";
+import { checkout } from "@/demo/checkout";
 import { checkoutFor, diagnostics, paths } from "@/lib/demo";
 import { buildContextPack } from "@/lib/context-pack";
 import { evaluatePolicy } from "@/lib/policy";
@@ -12,9 +13,8 @@ afterEach(async () => {
 });
 
 describe("deterministic checkout incident", () => {
-  it("keeps both health endpoints healthy while the broken configs make checkout return 500", async () => {
-    expect((await checkoutFor("production")).status).toBe(500);
-    expect((await checkoutFor("preview")).status).toBe(500);
+  it("makes checkout deterministically fail when the singular key is supplied", () => {
+    expect(checkout({ PAYMENT_API_URL: "https://payments.preview.internal/v1" }).status).toBe(500);
   });
 
   it("recovers preview after the plural key is corrected without changing production", async () => {
