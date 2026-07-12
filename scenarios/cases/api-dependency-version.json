@@ -1,0 +1,22 @@
+{
+  "id": "SCN-API_DEPENDENCY_VERSION",
+  "title": "API dependency version mismatch",
+  "industry": "E-commerce SaaS",
+  "primaryUser": "On-call engineer",
+  "criticalWorkflow": "Checkout and payment initiation",
+  "expectedOutcome": "BLOCKED_BY_POLICY",
+  "productionAction": "NONE",
+  "evidence": [
+    "runtime observation",
+    "current source code",
+    "deployment configuration",
+    "runbook or Git metadata"
+  ],
+  "safetyRules": [
+    "No production configuration change",
+    "No deployment or merge",
+    "No secret change",
+    "No destructive operation"
+  ],
+  "summary": "The preview API client targets an incompatible upstream version; only a verified compatibility change may proceed."
+}
