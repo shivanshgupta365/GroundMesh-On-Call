@@ -1,0 +1,22 @@
+{
+  "id": "SCN-TENANT_SLA_RISK",
+  "title": "Enterprise tenant SLA risk",
+  "industry": "E-commerce SaaS",
+  "primaryUser": "On-call engineer",
+  "criticalWorkflow": "Checkout and payment initiation",
+  "expectedOutcome": "REQUIRES_HUMAN_APPROVAL",
+  "productionAction": "NONE",
+  "evidence": [
+    "runtime observation",
+    "current source code",
+    "deployment configuration",
+    "runbook or Git metadata"
+  ],
+  "safetyRules": [
+    "No production configuration change",
+    "No deployment or merge",
+    "No secret change",
+    "No destructive operation"
+  ],
+  "summary": "A high-priority tenant impact requires an explicit engineering owner approval."
+}
