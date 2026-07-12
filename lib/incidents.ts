@@ -105,6 +105,24 @@ async function untrackedFileHashes() {
   })));
 }
 
+async function worktreeHash(file: string) {
+  try {
+    const { stdout } = await execFileAsync("git", ["hash-object", "--", file], { cwd: process.cwd() });
+    return stdout.trim();
+  } catch {
+    return "<missing>";
+  }
+}
+
+async function dirtyTrackedFileHashes() {
+  const [unstaged, staged] = await Promise.all([
+    git(["diff", "--name-only", "HEAD"]),
+    git(["diff", "--cached", "--name-only"]),
+  ]);
+  const files = new Set([...unstaged.split("\n"), ...staged.split("\n")].filter(Boolean));
+  return new Map(await Promise.all([...files].map(async (file) => [file, await worktreeHash(file)] as const)));
+}
+
 async function workingTreeSnapshot() {
   const [unstaged, staged, status, untracked] = await Promise.all([
     git(["diff", "--no-ext-diff", "--binary"]),
@@ -115,15 +133,14 @@ async function workingTreeSnapshot() {
   return `${status}\n-- unstaged --\n${unstaged}\n-- staged --\n${staged}\n-- untracked --\n${[...untracked].map(([file, hash]) => `${file}:${hash}`).join("\n")}`;
 }
 
-async function changedWorktreeFiles(baselineUntracked: Map<string, string>) {
-  const [unstaged, staged, currentUntracked] = await Promise.all([
-    git(["diff", "--name-only", "HEAD"]),
-    git(["diff", "--cached", "--name-only"]),
-    untrackedFileHashes(),
-  ]);
-  const files = new Set([...unstaged.split("\n"), ...staged.split("\n")].filter(Boolean));
-  for (const [file, hash] of currentUntracked) {
-    if (baselineUntracked.get(file) !== hash) files.add(file);
+async function changedWorktreeFiles(baselineTracked: Map<string, string>, baselineUntracked: Map<string, string>) {
+  const [currentTracked, currentUntracked] = await Promise.all([dirtyTrackedFileHashes(), untrackedFileHashes()]);
+  const files = new Set<string>();
+  for (const file of new Set([...baselineTracked.keys(), ...currentTracked.keys()])) {
+    if (baselineTracked.get(file) !== currentTracked.get(file)) files.add(file);
+  }
+  for (const file of new Set([...baselineUntracked.keys(), ...currentUntracked.keys()])) {
+    if (baselineUntracked.get(file) !== currentUntracked.get(file)) files.add(file);
   }
   return [...files].sort();
 }
@@ -174,7 +191,7 @@ async function workflow(origin: string) {
     const context = await buildContextPack(incidentId);
     store.current.context = context;
     addEvent("context", "Context Pack grounded", `${context.sources.length} current sources prepared; one stale-context conflict found.`);
-    const baselineUntracked = await untrackedFileHashes();
+    const [baselineTracked, baselineUntracked] = await Promise.all([dirtyTrackedFileHashes(), untrackedFileHashes()]);
     const beforeInvestigation = await workingTreeSnapshot();
     const investigator = await runRole("investigator", context);
     if (beforeInvestigation !== await workingTreeSnapshot()) throw new Error("Investigator changed the working tree; remediation was stopped.");
@@ -184,7 +201,7 @@ async function workflow(origin: string) {
     const productionAfter = await readFile(paths.production, "utf8");
     const expectedBranch = `groundmesh/${incidentId.toLowerCase()}`;
     if (await git(["branch", "--show-current"]) !== expectedBranch) throw new Error("Remediator did not create the required incident branch.");
-    const changedFiles = await changedWorktreeFiles(baselineUntracked);
+    const changedFiles = await changedWorktreeFiles(baselineTracked, baselineUntracked);
     const diff = await git(["diff", "HEAD", "--", "demo/config.preview.json"]);
     const policy = evaluatePolicy({ changedFiles, productionBefore, productionAfter, diff, investigationConfidence: Number(investigator.confidence) });
     store.current.policy = policy;
